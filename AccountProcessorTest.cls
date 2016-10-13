@@ -28,7 +28,6 @@ private class AccountProcessorTest {
         AccountProcessor.countContacts(accountIds);
         Test.stopTest();
 
-        
         List<Account> results = [SELECT Id, Number_of_Contacts__c
                                    FROM Account
                                   WHERE Id in :accountIds];
