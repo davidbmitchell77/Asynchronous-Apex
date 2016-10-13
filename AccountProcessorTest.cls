@@ -1,37 +1,39 @@
 @isTest
-private class AddPrimaryContactTest {
-    @testSetup
-    static void setup() {
+private class AccountProcessorTest {
+	
+    static TestMethod void myTest() {
         List<Account> accounts = new List<Account>();
-        for (Integer i=0; i<50; i++) {
-            Account ny = new Account();
-            ny.Name = 'Test Account (NY)';
-            ny.BillingState = 'NY';
-            accounts.add(ny);
-            Account ca = new Account();
-            ca.Name = 'Test Account (CA)';
-            ca.BillingState = 'CA';
-            accounts.add(ca);
+        for (Integer i=0; i<100; i++) {
+            Account account = new Account();
+            account.Name = 'AccountProcessorTest Account ' + i;
+            accounts.add(account);
         }
         insert accounts;
-    }
 
-    static void myTest() {
-        Contact contactObj = new Contact(
-            FirstName = 'California',
-            LastName = 'Bob'
-        );
-        String state_abbrev = 'CA';
+        List<Id> accountIds = new List<Id>();
+        List<Contact> contacts = new List<Contact>();
+        for (Account a : accounts) {
+            accountIds.add(a.Id);
+            for (Integer i=0; i<5; i++) {
+                Contact contact = new Contact();
+                contact.FirstName = 'AccountProcessor Test Contact';
+                contact.LastName = String.valueOf(i);
+                contact.AccountId = a.Id;
+                contacts.add(contact);
+            }
+        }
+        insert contacts;
 
         Test.startTest();
-        AddPrimaryContact apc = new AddPrimaryContact(contactObj, state_abbrev);
-        Id jobId = System.enqueueJob(apc);
+        AccountProcessor.countContacts(accountIds);
         Test.stopTest();
 
-        List<Account> accounts = [SELECT Id, (SELECT Contact.Name FROM Account.Contacts) FROM Account WHERE BillingState = 'CA'];
-        System.assertEquals(50, accounts.size());
-        for (Account a : accounts) {
-            System.assertEquals(1, a.Contacts.size());
+        
+        List<Account> results = [SELECT Id, Number_of_Contacts__c
+                                   FROM Account
+                                  WHERE Id in :accountIds];
+        for (Account a : results) {
+            System.AssertEquals(5, a.Number_of_Contacts__c);
         }
     }
 }
